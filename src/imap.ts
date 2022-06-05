@@ -15,5 +15,31 @@ export async function listen() {
     host: config.host,
     port: config.port,
     tls: true,
+    tlsOptions: {
+      servername: config.host,
+    },
   });
+
+  client.once("ready", () => {
+    console.log("ready");
+    client.openBox("INBOX", false, (err, mailbox) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log("connected", mailbox);
+      client.on("mail", console.log);
+      client.on("update", console.log);
+    });
+  });
+
+  client.once("close", () => {
+    console.log("disconnected");
+  });
+
+  client.on("error", (err: unknown) => {
+    console.error(err);
+  });
+
+  client.connect();
 }
