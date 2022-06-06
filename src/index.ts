@@ -1,8 +1,9 @@
 import "dotenv/config";
-import * as twitch from "./twitch";
-import * as imap from "./imap";
+import * as cheerio from "cheerio";
 import { createClient } from "redis";
+import * as imap from "./imap";
 import { scrapeUserDonations } from "./scrape";
+import * as twitch from "./twitch";
 
 const redis = createClient();
 redis.on("error", (err) => console.error(err));
@@ -17,8 +18,10 @@ async function init() {
 
   const _usernames = await redis.get("usernames");
   const $usernames = new Set<string>(_usernames ? JSON.parse(_usernames) : []);
-
   console.log("existing usernames", $usernames);
+  const _receipts = await redis.get("receipts");
+  const $receipts = new Set<string>(_receipts ? JSON.parse(_receipts) : []);
+  console.log("existing receipts", $receipts);
 
   function addUsername(username: string) {
     $usernames.add(username);
@@ -37,12 +40,16 @@ async function init() {
     return;
   }
 
+  const DONATION_FROM = "info@wegive.com.au";
+  const reSubjectReceiptId = /\b(\w+)$/;
+  const reBodyContent = />(.+) has donated (.+)</;
+
   imap.listen({
     onMessages: async (messages) => {
-      const hasDonations = messages.some(
-        (message) => message.headers["from"]?.[0] === "info@wegive.com.au"
+      const donationMessages = messages.filter(
+        (message) => message.headers["from"]?.[0] === DONATION_FROM
       );
-      if (!hasDonations) {
+      if (!donationMessages.length) {
         console.log("no matches...");
         return;
       } else {
@@ -50,9 +57,30 @@ async function init() {
       }
 
       for (const message of messages) {
-        console.log(
-          `message: ${message.headers["from"]?.[0]} "${message.headers["subject"]?.[0]}"`
-        );
+        const from = message.headers["from"]?.[0];
+        if (from !== DONATION_FROM) {
+          continue;
+        }
+        const subject = message.headers["subject"]?.[0];
+        if (!subject) {
+          throw new TypeError("no subject");
+        }
+        const [, receiptId] = (subject.match(reSubjectReceiptId) ?? []) as
+          | (undefined | string)[];
+        if (!receiptId) {
+          throw new TypeError("no receipt id found");
+        }
+
+        const buffer = message.buffer;
+        const [, name, donation] = (buffer.match(reBodyContent) ?? []) as (
+          | undefined
+          | string
+        )[];
+        if (!(name && donation)) {
+          throw new TypeError("no name,donation match string");
+        }
+
+        console.log(`donation "${receiptId}": ${name} of ${donation}`);
       }
 
       const map = new Map<string, string>(

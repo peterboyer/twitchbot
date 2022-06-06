@@ -1,4 +1,5 @@
 import Imap from "imap";
+import mailparser from "mailparser";
 
 import { getEnvOrThrow } from "./env";
 
@@ -72,10 +73,11 @@ export async function listen(options: {
             msg.once("attributes", (attrs) => {
               attributes = attrs;
             });
-            msg.once("end", () => {
+            msg.once("end", async () => {
+              const parsed = await mailparser.simpleParser(buffer);
               const message: Message = {
                 id,
-                buffer,
+                buffer: parsed.html || "",
                 headers: Imap.parseHeader(buffer),
                 attributes,
               };
