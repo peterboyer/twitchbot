@@ -1,6 +1,9 @@
 import "dotenv/config";
 // import * as twitch from "./twitch";
 import * as imap from "./imap";
+import { createClient } from "redis";
+
+const client = createClient();
 
 imap.listen({
   onMessages: (messages) => {
