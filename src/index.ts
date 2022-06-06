@@ -2,30 +2,34 @@ import "dotenv/config";
 import * as twitch from "./twitch";
 import * as imap from "./imap";
 import { createClient } from "redis";
-import { scrapeUsernames } from "./scrape";
+import { scrapeUserDonations } from "./scrape";
 
-const client = createClient();
-client.on("error", (err) => console.error(err));
-client.connect();
+const redis = createClient();
+redis.on("error", (err) => console.error(err));
+redis.connect();
 
 async function init() {
   const chat = await twitch.listen();
 
-  const _usernames = await client.get("usernames");
+  if (process.env["REDIS_CLEAR"]) {
+    await redis.set("usernames", "[]");
+  }
+
+  const _usernames = await redis.get("usernames");
   const $usernames = new Set<string>(_usernames ? JSON.parse(_usernames) : []);
 
   console.log("existing usernames", $usernames);
 
   function addUsername(username: string) {
     $usernames.add(username);
-    client.set("usernames", JSON.stringify(Array.from($usernames.values())));
+    redis.set("usernames", JSON.stringify(Array.from($usernames.values())));
   }
 
   async function thankUserInChat(username: string, amount: string) {
     await chat.send(
       [
         "DONATION!",
-        `@${username} donated ${amount} to the Cancer Council!`,
+        `@${username} just donated ${amount} for the Cancer Council!`,
         "F**K CANCER!",
         "I appreciate each and every donation; type !donate in chat for link and instructions.",
       ].join(" ")
@@ -51,18 +55,19 @@ async function init() {
         );
       }
 
-      const usernames = await scrapeUsernames();
-      if (!usernames.length) {
-        console.log("no usernames...");
+      const map = new Map<string, string>(
+        Object.entries(await scrapeUserDonations())
+      );
+      if (!map.size) {
+        console.log("no map items...");
       }
 
-      for (const username of usernames) {
+      for (const [username, donation] of map) {
         if ($usernames.has(username)) {
           continue;
         }
         addUsername(username);
-        // TODO: get $$$ donation amount for thank
-        thankUserInChat(username, "$50.00");
+        thankUserInChat(username, donation);
       }
     },
   });
