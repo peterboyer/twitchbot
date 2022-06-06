@@ -10,6 +10,7 @@ async function getAuthToken(config: {
   refreshToken: string;
 }): Promise<{ token: string; expiry: Date }> {
   const response = await fetch("https://id.twitch.tv/oauth2/token", {
+    method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: config.clientId,
@@ -27,7 +28,9 @@ async function getAuthToken(config: {
   };
 }
 
-export async function init() {
+export async function listen(): Promise<{
+  send: (message: string) => Promise<void>;
+}> {
   const config = {
     clientId: getEnvOrThrow("TWITCH_CLIENT_ID"),
     clientSecret: getEnvOrThrow("TWITCH_CLIENT_SECRET"),
@@ -54,4 +57,21 @@ export async function init() {
     },
     channels: [channel],
   });
+
+  client.connect();
+
+  client.on("message", (channel, _tags, message, self) => {
+    if (self) return;
+    const command = message.toLowerCase();
+    if (command === "!test") {
+      client.say(channel, "okay");
+    }
+  });
+
+  return {
+    send: async (message) => {
+      await client.say(channel, message);
+      return;
+    },
+  };
 }
