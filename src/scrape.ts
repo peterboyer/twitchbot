@@ -4,50 +4,47 @@ import * as cheerio from "cheerio";
 const DONATION_URL =
   "https://spring2022.shitboxrally.com.au/2-bros-chillin-in-a-shitbox";
 
-const reUsername = /\B@([a-z0-9_]+)\b/;
-function parseUsername(input: string): string | null {
-  const match = input.match(reUsername);
-  if (!match) {
-    return null;
-  }
+const reAlias = /\B@([a-z0-9_]+)\b/;
+const reNameAndAmount = /(.+) gave (.+)/;
 
-  const [, value] = match as [never, string];
-  return value;
+export interface Donation {
+  name: string;
+  amount: string;
+  username?: string;
 }
 
-const reDonation = /^.*\s(\$\d+\.\d+)\.$/;
-function parseDonation(input: string): string | null {
-  const match = input.match(reDonation);
-  if (!match) {
-    return null;
-  }
+export async function fetchUserDonations(): Promise<Donation[]> {
+  const donations: Donation[] = [];
 
-  const [, value] = match as [never, string];
-  return value;
-}
-
-export async function scrapeUserDonations(): Promise<Record<string, string>> {
-  const map = new Map<string, string>();
   const response = await fetch(DONATION_URL);
   const html = await response.text();
 
   const $ = cheerio.load(html);
-  const list = $(".posts-container");
-  const items = $(".post", list);
+  const items = $(".post");
 
-  for (const item of items.children()) {
+  for (const item of items) {
     const title = $(".heading", item).text();
     const message = $(".content", item).text();
-    const username = parseUsername(message);
-    if (!username) {
-      continue;
+
+    const [, username] = (message.toLowerCase().match(reAlias) ?? []) as (
+      | string
+      | undefined
+    )[];
+    const [, name, amount] = (title.match(reNameAndAmount) ?? []) as (
+      | string
+      | undefined
+    )[];
+
+    if (!(name && amount)) {
+      throw new TypeError("name and amount not found, check scraper");
     }
-    const donation = parseDonation(title);
-    if (!donation) {
-      throw new TypeError("unable to parse donation");
-    }
-    map.set(username, donation);
+
+    donations.push({
+      name,
+      amount,
+      username,
+    });
   }
 
-  return Object.fromEntries(map.entries());
+  return donations.reverse();
 }
