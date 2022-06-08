@@ -4,7 +4,7 @@ import { getDonations } from "./get-donations";
 
 async function getHtml(): Promise<string> {
   return fs.readFileSync(
-    path.resolve(__dirname, "./get-donations.test.html"),
+    path.resolve(__dirname, "./get-donations.test.data"),
     "utf-8"
   );
 }
