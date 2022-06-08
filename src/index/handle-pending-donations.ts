@@ -1,6 +1,6 @@
-import { Donation } from "./scrape";
-import { getAddedItems } from "./get-added-items";
-import { getDisplayName } from "./get-display-name";
+import { Donation } from "./donation";
+import { getAddedItems } from "./handle-pending-donations/get-added-items";
+import { getDisplayName } from "./handle-pending-donations/get-display-name";
 
 export async function handlePendingDonations(options: {
   prev: Donation[];

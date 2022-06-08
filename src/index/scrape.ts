@@ -1,17 +1,12 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+import { Donation } from "./donation";
 
 const DONATION_URL =
   "https://spring2022.shitboxrally.com.au/2-bros-chillin-in-a-shitbox";
 
 const reAlias = /\B@([a-z0-9_]+)\b/;
 const reNameAndAmount = /(.+) gave (.+)/;
-
-export interface Donation {
-  name: string;
-  amount: string;
-  username?: string;
-}
 
 export async function fetchUserDonations(): Promise<Donation[]> {
   const donations: Donation[] = [];
@@ -46,5 +41,5 @@ export async function fetchUserDonations(): Promise<Donation[]> {
     });
   }
 
-  return donations.reverse();
+  return donations;
 }
