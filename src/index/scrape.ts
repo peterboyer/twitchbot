@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
-import { Donation } from "./donation";
+import { Donation } from "../shared/donation";
 
 const DONATION_URL =
   "https://spring2022.shitboxrally.com.au/2-bros-chillin-in-a-shitbox";

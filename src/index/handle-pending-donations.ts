@@ -1,4 +1,4 @@
-import { Donation } from "./donation";
+import { Donation } from "../shared/donation";
 import { getAddedItems } from "./handle-pending-donations/get-added-items";
 import { getDisplayName } from "./handle-pending-donations/get-display-name";
 

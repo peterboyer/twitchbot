@@ -1,6 +1,6 @@
 import Imap from "imap";
 import mailparser from "mailparser";
-import { getEnvOrThrow } from "./env";
+import { getEnvOrThrow } from "./shared/env";
 
 interface Message {
   id: number;

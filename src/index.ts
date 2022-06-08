@@ -2,7 +2,7 @@ import "dotenv/config";
 import { createClient } from "redis";
 import { observable, autorun, toJS } from "mobx";
 import * as imap from "./index/imap";
-import { Donation } from "./index/donation";
+import { Donation } from "./shared/donation";
 import { fetchUserDonations } from "./index/scrape";
 import * as twitch from "./index/twitch";
 import { redisRead, redisWrite } from "./index/redis";

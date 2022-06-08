@@ -2,7 +2,7 @@ import { add } from "date-fns";
 import fetch from "node-fetch";
 import { Client } from "tmi.js";
 
-import { getEnvOrThrow } from "./env";
+import { getEnvOrThrow } from "./shared/env";
 
 async function getAuthToken(config: {
   clientId: string;
