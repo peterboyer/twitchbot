@@ -2,7 +2,7 @@ import Imap from "imap";
 import mailparser from "mailparser";
 import { getEnvOrThrow } from "./shared/env";
 
-interface Message {
+export interface Message {
   id: number;
   buffer: string;
   headers: Record<string, string[]>;
@@ -10,6 +10,8 @@ interface Message {
 }
 
 export async function listen(options: {
+  mailbox?: string;
+  criteria?: (string | string[])[];
   onMessage?: (message: Message) => void;
   onMessages?: (messages: Message[]) => void;
 }) {
@@ -33,16 +35,17 @@ export async function listen(options: {
     },
   });
 
+  const mailbox = options.mailbox ?? "INBOX";
+  const criteria = options.criteria ?? ["UNSEEN"];
+
   client.once("ready", () => {
-    console.log("ready");
-    client.openBox("INBOX", false, (err) => {
+    client.openBox(mailbox, false, (err) => {
       if (err) {
         console.error(err);
         return;
       }
-      console.log("connected");
       const parseUnread = () => {
-        client.search(["UNSEEN"], (err, ids) => {
+        client.search(criteria, (err, ids) => {
           if (err) {
             console.error(err);
             return;
