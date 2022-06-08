@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createClient } from "redis";
-import { observable, autorun, toJS } from "mobx";
+import { observable, autorun, toJS, runInAction } from "mobx";
 import { Donation } from "./shared/donation";
 import * as imap from "./index/imap";
 import * as twitch from "./index/twitch";
@@ -8,6 +8,7 @@ import { getDonations } from "./index/get-donations";
 import { redisRead, redisWrite } from "./index/redis";
 import { getDonationMessage } from "./index/get-donation-message";
 import { getAddedItems } from "./index/get-added-items";
+import { Queue } from "./index/queue";
 
 const DONATION_FROM = "info@wegive.com.au";
 const DONATION_LIST_KEY = "donations_list";
@@ -15,9 +16,10 @@ const DONATION_LIST_KEY = "donations_list";
 async function init() {
   const redis = createClient();
   redis.on("error", (err) => console.error(err));
-
   await redis.connect();
-  const chat = await twitch.listen();
+  if (process.env["REDIS_RESET"]) {
+    await redisWrite(redis, DONATION_LIST_KEY, []);
+  }
 
   const donations = observable(
     (await redisRead<Donation[]>(redis, DONATION_LIST_KEY)) ?? []
@@ -26,6 +28,8 @@ async function init() {
     redisWrite(redis, DONATION_LIST_KEY, toJS(donations));
   });
 
+  const queue = Queue();
+  const chat = await twitch.listen();
   const mail = await imap.listen({
     criteria: ["UNSEEN", ["FROM", DONATION_FROM]],
     onMessages: async (messages) => {
@@ -39,14 +43,16 @@ async function init() {
       console.log("New Donations:");
       console.log(pending);
 
-      await Promise.all(
-        pending.map((donation) => {
-          chat.send(getDonationMessage(donation));
-        })
-      );
-
-      donations.push(...pending);
       mail.markRead(messages);
+      runInAction(() => {
+        donations.push(...pending);
+      });
+
+      for (const donation of pending) {
+        queue.push(() => {
+          chat.send(getDonationMessage(donation));
+        });
+      }
     },
   });
 }
