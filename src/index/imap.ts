@@ -1,8 +1,8 @@
 import Imap from "imap";
 import mailparser from "mailparser";
 import { getEnvOrThrow } from "./shared/env";
-import { Message } from "./message";
-import { getMessageSource, Source } from "./get-message-source";
+import { Message } from "./shared/message";
+import { getMessageSource, Source } from "./imap/get-message-source";
 
 export async function listen(options: {
   mailbox?: string;

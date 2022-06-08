@@ -1,4 +1,4 @@
-import { Message } from "./message";
+import { Message } from "../shared/message";
 
 export type Source = string | Message | Message[];
 
