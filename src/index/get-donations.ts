@@ -6,17 +6,18 @@ const DONATION_URL =
   "https://spring2022.shitboxrally.com.au/2-bros-chillin-in-a-shitbox";
 
 const reAlias = /\B@([a-z0-9_]+)\b/;
-const reNameAndAmount = /(.+) gave (.+)/;
+const reNameAndAmount = /(.+) gave (.+)./;
 
-export async function getUserDonations(): Promise<Donation[]> {
-  const donations: Donation[] = [];
-
-  const response = await fetch(DONATION_URL);
-  const html = await response.text();
-
+export async function getDonations(
+  options: {
+    getHtml?: typeof getHtml;
+  } = {}
+): Promise<Donation[]> {
+  const html = await (options.getHtml ?? getHtml)();
   const $ = cheerio.load(html);
   const items = $(".post");
 
+  const donations: Donation[] = [];
   for (const item of items) {
     const title = $(".heading", item).text();
     const message = $(".content", item).text();
@@ -42,4 +43,10 @@ export async function getUserDonations(): Promise<Donation[]> {
   }
 
   return donations;
+}
+
+async function getHtml() {
+  const response = await fetch(DONATION_URL);
+  const html = await response.text();
+  return html;
 }
