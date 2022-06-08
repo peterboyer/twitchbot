@@ -4,7 +4,7 @@ import { observable, autorun, toJS } from "mobx";
 import { Donation } from "./shared/donation";
 import * as imap from "./index/imap";
 import * as twitch from "./index/twitch";
-import { getUserDonations } from "./index/get-user-donations";
+import { getDonations } from "./index/get-donations";
 import { redisRead, redisWrite } from "./index/redis";
 import { getDonationMessage } from "./index/get-donation-message";
 import { getAddedItems } from "./index/get-added-items";
@@ -26,22 +26,18 @@ async function init() {
     redisWrite(redis, DONATION_LIST_KEY, toJS(donations));
   });
 
-  imap.listen({
+  const mail = await imap.listen({
+    criteria: ["UNSEEN", ["FROM", DONATION_FROM]],
     onMessages: async (messages) => {
-      const hasDonationReceipt = messages.some(
-        (message) => message.headers["from"]?.[0] === DONATION_FROM
-      );
-      if (!hasDonationReceipt) {
-        return;
-      }
-
-      const next = await getUserDonations();
+      const next = await getDonations();
       if (!next.length) {
         return;
       }
 
       const prev = toJS(donations);
       const pending = getAddedItems(prev, next);
+      console.log("New Donations:");
+      console.log(pending);
 
       await Promise.all(
         pending.map((donation) => {
@@ -50,6 +46,7 @@ async function init() {
       );
 
       donations.push(...pending);
+      mail.markRead(messages);
     },
   });
 }

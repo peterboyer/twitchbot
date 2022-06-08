@@ -5,6 +5,6 @@ test.each([
   [{ name: "Foo Bar", username: "foobar" }, "Foo Bar (@foobar)"],
   [{ name: "Anonymous", username: undefined }, "Anonymous"],
   [{ name: "Anonymous", username: "foobar" }, "@foobar"],
-])("%j %s", (input, expected) => {
-  expect(getDisplayName(input)).toBe(expected);
+])("%j %s", (source, expected) => {
+  expect(getDisplayName(source)).toBe(expected);
 });

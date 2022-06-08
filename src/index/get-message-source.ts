@@ -1,8 +1,8 @@
 import { Message } from "./message";
 
-export function getMessageSource(
-  source: string | Message | Message[]
-): string | string[] {
+export type Source = string | Message | Message[];
+
+export function getMessageSource(source: Source): string | string[] {
   if (typeof source === "string") {
     return source;
   }
@@ -11,10 +11,10 @@ export function getMessageSource(
   const ids: string[] = [];
   for (const message of messages) {
     const id = message.attributes["uid"];
-    if (!(id && typeof id === "string")) {
+    if (!(id && (typeof id === "string" || typeof id === "number"))) {
       continue;
     }
-    ids.push(id);
+    ids.push(`${id}`);
   }
 
   return ids;

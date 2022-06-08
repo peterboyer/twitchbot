@@ -1,20 +1,17 @@
 import Imap from "imap";
 import mailparser from "mailparser";
 import { getEnvOrThrow } from "./shared/env";
-
-export interface Message {
-  id: number;
-  buffer: string;
-  headers: Record<string, string[]>;
-  attributes: Record<string, unknown>;
-}
+import { Message } from "./message";
+import { getMessageSource, Source } from "./get-message-source";
 
 export async function listen(options: {
   mailbox?: string;
   criteria?: (string | string[])[];
   onMessage?: (message: Message) => void;
   onMessages?: (messages: Message[]) => void;
-}) {
+}): Promise<{
+  markRead(source: Source): Promise<void>;
+}> {
   const config = {
     user: getEnvOrThrow("IMAP_USER"),
     password: getEnvOrThrow("IMAP_PASSWORD"),
@@ -110,4 +107,15 @@ export async function listen(options: {
   });
 
   client.connect();
+
+  return {
+    markRead: async (_source) => {
+      const source = getMessageSource(_source);
+      return new Promise((resolve, reject) => {
+        client.setFlags(source, "\\Seen", (err) =>
+          err ? reject(err) : resolve()
+        );
+      });
+    },
+  };
 }
