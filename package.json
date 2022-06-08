@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "node-dev --no-warnings -- ./src/index.ts",
     "build": "echo NotImplemented && exit 1",
-    "test": "echo NotImplemented && exit 1",
-    "test:watch": "echo NotImplemented && exit 1",
+    "test": "yarn jest",
+    "test:watch": "yarn jest --watch",
     "lint": "eslint ./**/*.ts"
   },
   "dependencies": {
@@ -19,10 +19,16 @@
     "@types/node": "^17.0.39",
     "@types/node-fetch": "^2.6.1",
     "@types/tmi.js": "^1.8.1",
+    "@typescript-eslint/eslint-plugin": "^5.27.1",
+    "@typescript-eslint/parser": "^5.27.1",
     "cheerio": "^1.0.0-rc.11",
     "date-fns": "^2.28.0",
     "diff": "^5.1.0",
     "dotenv": "^16.0.1",
+    "eslint": "^8.17.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "esresult": "^3.5.0",
     "hash-sum": "^2.0.0",
     "imap": "^0.8.19",
