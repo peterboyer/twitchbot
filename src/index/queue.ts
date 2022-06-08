@@ -16,11 +16,17 @@ export interface Queue {
 export function Queue(options: { intervalMilliseconds?: number } = {}): Queue {
   const emitter = new EventEmitter();
   const queue = new Set<AnyFunction>();
-  const { intervalMilliseconds = 1000 } = options;
+  const { intervalMilliseconds = 2000 } = options;
 
   let currentTimeout: NodeJS.Timeout | undefined = undefined;
   const pop = () => {
+    // skip, if queue empty
     if (!queue.size) {
+      return;
+    }
+
+    // skip, if a queue item is already scheduled
+    if (currentTimeout) {
       return;
     }
 
@@ -30,16 +36,15 @@ export function Queue(options: { intervalMilliseconds?: number } = {}): Queue {
       throw new TypeError("invariant: first entry must have a value");
     }
 
+    currentTimeout = setTimeout(() => {
+      clearTimeout(currentTimeout);
+      currentTimeout = undefined;
+      pop();
+    }, intervalMilliseconds);
+
     queue.delete(callback);
     setTimeout(callback, 0);
     emitter.emit("pop");
-    if (!currentTimeout) {
-      currentTimeout = setTimeout(() => {
-        clearTimeout(currentTimeout);
-        currentTimeout = undefined;
-        pop();
-      }, intervalMilliseconds);
-    }
   };
 
   return {
