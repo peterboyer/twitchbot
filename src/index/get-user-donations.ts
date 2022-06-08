@@ -8,7 +8,7 @@ const DONATION_URL =
 const reAlias = /\B@([a-z0-9_]+)\b/;
 const reNameAndAmount = /(.+) gave (.+)/;
 
-export async function fetchUserDonations(): Promise<Donation[]> {
+export async function getUserDonations(): Promise<Donation[]> {
   const donations: Donation[] = [];
 
   const response = await fetch(DONATION_URL);

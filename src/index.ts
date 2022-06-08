@@ -1,12 +1,13 @@
 import "dotenv/config";
 import { createClient } from "redis";
 import { observable, autorun, toJS } from "mobx";
-import * as imap from "./index/imap";
 import { Donation } from "./shared/donation";
-import { fetchUserDonations } from "./index/scrape";
+import * as imap from "./index/imap";
 import * as twitch from "./index/twitch";
+import { getUserDonations } from "./index/get-user-donations";
 import { redisRead, redisWrite } from "./index/redis";
-import { handlePendingDonations } from "./index/handle-pending-donations";
+import { getDonationMessage } from "./index/get-donation-message";
+import { getAddedItems } from "./index/get-added-items";
 
 const DONATION_FROM = "info@wegive.com.au";
 const DONATION_LIST_KEY = "donations_list";
@@ -17,10 +18,6 @@ async function init() {
 
   await redis.connect();
   const chat = await twitch.listen();
-
-  if (process.env["REDIS_CLEAR"]) {
-    // TODO
-  }
 
   const donations = observable(
     (await redisRead<Donation[]>(redis, DONATION_LIST_KEY)) ?? []
@@ -35,14 +32,24 @@ async function init() {
         (message) => message.headers["from"]?.[0] === DONATION_FROM
       );
       if (!hasDonationReceipt) {
-        console.log("no matching emails ...");
         return;
       }
-      await handlePendingDonations({
-        prev: toJS(donations),
-        next: await fetchUserDonations(),
-        send: chat.send,
-      });
+
+      const next = await getUserDonations();
+      if (!next.length) {
+        return;
+      }
+
+      const prev = toJS(donations);
+      const pending = getAddedItems(prev, next);
+
+      await Promise.all(
+        pending.map((donation) => {
+          chat.send(getDonationMessage(donation));
+        })
+      );
+
+      donations.push(...pending);
     },
   });
 }
