@@ -9,6 +9,7 @@ export async function listen(options: {
   criteria?: (string | string[])[];
   onMessage?: (message: Message) => void;
   onMessages?: (messages: Message[]) => void;
+  onDisconnect?: () => void;
 }): Promise<{
   markRead(source: Source): Promise<void>;
 }> {
@@ -19,7 +20,7 @@ export async function listen(options: {
     port: parseInt(getEnvOrThrow("IMAP_PORT"), 10),
   };
 
-  const { onMessage, onMessages } = options;
+  const { onMessage, onMessages, onDisconnect } = options;
 
   const client = new Imap({
     user: config.user,
@@ -99,7 +100,7 @@ export async function listen(options: {
   });
 
   client.once("close", () => {
-    console.log("disconnected");
+    onDisconnect && onDisconnect();
   });
 
   client.on("error", (err: unknown) => {

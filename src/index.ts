@@ -22,7 +22,9 @@ async function init() {
   }
 
   const donations = observable(
-    (await redisRead<Donation[]>(redis, DONATION_LIST_KEY)) ?? []
+    ((await redisRead<Donation[]>(redis, DONATION_LIST_KEY)) ?? []).map(
+      (donation) => ({ username: undefined, ...donation } as Donation)
+    )
   );
   autorun(() => {
     redisWrite(redis, DONATION_LIST_KEY, toJS(donations));
@@ -30,31 +32,40 @@ async function init() {
 
   const queue = Queue();
   const chat = await twitch.listen();
-  const mail = await imap.listen({
-    criteria: ["UNSEEN", ["FROM", DONATION_FROM]],
-    onMessages: async (messages) => {
-      const next = await getDonations();
-      if (!next.length) {
-        return;
-      }
 
-      const prev = toJS(donations);
-      const pending = getAddedItems(prev, next);
-      console.log("New Donations:");
-      console.log(pending);
+  let mail: Awaited<ReturnType<typeof imap.listen>>;
+  const createMailClient = async () => {
+    mail = await imap.listen({
+      criteria: ["UNSEEN", ["FROM", DONATION_FROM]],
+      onMessages: async (messages) => {
+        const next = await getDonations();
+        if (!next.length) {
+          return;
+        }
 
-      mail.markRead(messages);
-      runInAction(() => {
-        donations.push(...pending);
-      });
+        const prev = toJS(donations);
+        const pending = getAddedItems(prev, next);
+        console.log("New Donations:");
+        console.log(pending);
 
-      for (const donation of pending) {
-        queue.push(() => {
-          chat.send(getDonationMessage(donation));
+        mail.markRead(messages);
+        runInAction(() => {
+          donations.push(...pending);
         });
-      }
-    },
-  });
+
+        for (const donation of pending) {
+          queue.push(() => {
+            chat.send(getDonationMessage(donation));
+          });
+        }
+      },
+      onDisconnect: () => {
+        createMailClient();
+      },
+    });
+  };
+
+  createMailClient();
 }
 
 init();
