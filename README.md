@@ -1,5 +1,8 @@
 # twitchbot
 
+[![file structure:
+destiny](https://img.shields.io/badge/file%20structure-destiny-7a49ff?style=flat)](https://github.com/benawad/destiny)
+
 Currently, this is a bot (written in NodeJS/TypeScript) that automatically
 acknowledges (to my Twitch channel's[1] chat) all incoming charity donations
 made to my team[2] for The Shitbox Rally[3], raising money for the Cancer
