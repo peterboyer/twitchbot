@@ -14,6 +14,8 @@ Council[4] to `!fightcancer`.
 - [3] [Shitbox Rally](https://www.shitboxrally.com.au/)
 - [4] [Cancer Council](https://www.cancer.org.au/)
 
+## Architecture
+
 - nodejs, to coordinate
 - gmail, via node-imap, to listen for new donation emails to trigger scrape
 - fetch/cheerio, to scrape donations feed page for diffing
