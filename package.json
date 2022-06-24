@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "node-dev --no-warnings -- ./src/index.ts",
     "build": "echo NotImplemented && exit 1",
-    "test": "yarn jest",
-    "test:watch": "yarn jest --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "lint": "eslint ./**/*.ts"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.0.0",
     "esresult": "^3.5.0",
+    "forever": "^4.0.3",
     "hash-sum": "^2.0.0",
     "imap": "^0.8.19",
     "jest": "^28.1.1",
