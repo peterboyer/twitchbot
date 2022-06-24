@@ -8,7 +8,8 @@ export async function redisRead<T>(
   key: string
 ): Promise<T | undefined> {
   const valueJson = await redis.get(key);
-  console.log(`redis:read "${key}"="${valueJson}"`);
+  // console.log(`redis:read "${key}"="${valueJson}"`);
+  console.log(`redis:read "${key}"`);
   if (!valueJson) {
     return undefined;
   }
@@ -22,5 +23,6 @@ export async function redisWrite(
 ): Promise<void> {
   const valueJson = JSON.stringify(value).orThrow();
   await redis.set(key, valueJson);
-  console.log(`redis:write "${key}"="${valueJson}"`);
+  // console.log(`redis:write "${key}"="${valueJson}"`);
+  console.log(`redis:write "${key}"`);
 }
