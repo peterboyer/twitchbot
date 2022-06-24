@@ -12,6 +12,8 @@ import { Queue } from "./index/queue";
 
 const DONATION_FROM = "info@wegive.com.au";
 const DONATION_LIST_KEY = "donations_list";
+const FORCE_RESTART = 30 * 60 * 1000; // 30 min -> seconds -> milliseconds
+// const FORCE_RESTART = 5000; // 5 seconds
 
 async function init() {
   const redis = createClient();
@@ -66,6 +68,9 @@ async function init() {
   };
 
   createMailClient();
+  setTimeout(() => {
+    process.exit();
+  }, FORCE_RESTART);
 }
 
 init();
